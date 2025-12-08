@@ -4,6 +4,27 @@ format: html
 ---
 
 ```{r packages}
+library(tidyverse)
+library(sf)
+
+```
+
+```{r}
+towns <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/townssurvey_shp/TOWNSSURVEY_POLY.shp")
+
+```
+
+```{r}
+towns |>
+  filter(TOWN == "BOSTON") |>
+  ggplot() +
+  geom_sf()
+```
+
+```{r}
+boston <- towns |>
+  filter(TOWN == "BOSTON")
+```
 
 ```
 
