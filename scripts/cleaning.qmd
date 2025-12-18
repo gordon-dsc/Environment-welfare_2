@@ -4,5 +4,94 @@ format: html
 ---
 
 ```{r packages}
+# In cleaning.qmd
+library(dplyr)
+library(purrr)
 
+cleaned_facilities <- facilities_df |>
+  #Filtering for specific platform types
+  #  'elevated-subplatform' or fully_elevated
+  filter(attributes.type %in% c("ELEVATED_SUBPLATFORM", "FULLY_ELEVATED_PLATFORM")) |>
+  
+  
+  #  keep id, type, short_name, and the coordinates for  spatial join
+  select(
+    id, 
+    facility_type = attributes.type, 
+    short_name = attributes.short_name,
+    latitude = attributes.latitude,
+    longitude = attributes.longitude
+  ) 
+  
+
+
+#  Save the final relational flat file could be used for kaggle documentation and etc
+write.csv(cleaned_facilities, "../output/mbta_facilities_final.csv", row.names = FALSE)
+
+# 1. Handling NA values and convert to a Spatial Object 
+# st_as_sf crashes if there are NAs in longitude/latitude, so this is how I handle it. 
+
+facilities_spatial <- cleaned_facilities |>
+  filter(!is.na(latitude) & !is.na(longitude)) |> 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+# 2. Ensuring that Boston Hull is also in EPSG:4326
+# This helps me because my previous joins and crs were cashing
+boston_hull_sf <- st_sf(geometry = boston_hull) |> 
+  st_transform(4326)
+
+#  Spatial Join
+#  attaches the hull info to every facility that falls inside it
+facilities_in_hull <- st_join(facilities_spatial, boston_hull_sf, join = st_intersects)
+
+# Number of  the facilities in Boston
+#  keep only those that actually intersected
+facilities_boston_only <- facilities_in_hull |>
+  filter(!is.na(st_dimension(geometry))) # Keep only points that successfully joined
+
+total_count <- nrow(facilities_boston_only)
+print(paste("Total elevated facilities in Boston Hull:", total_count))
+
+# 5. Save the final spatial CSV for Kaggle
+# We convert back to a regular data frame so it's a "flat file"
+facilities_final_output <- facilities_boston_only |>
+  mutate(lon = st_coordinates(geometry)[,1],
+         lat = st_coordinates(geometry)[,2]) |>
+  st_drop_geometry()
+
+write.csv(facilities_final_output, "../output/mbta_facilities_final.csv", row.names = FALSE)
 ```
+
+```{r}
+
+# Simple plot
+ggplot() +
+  geom_sf(data = boston_landcover_final, aes(fill = COVERNAME)) + 
+  geom_sf(data = facilities_boston_only, color = "red")
+```
+```{r}
+colnames(boston_landcover_final)
+```
+```{r}
+boston_landcover_simple <- boston_landcover_final |>
+  group_by(COVERNAME) |>
+  summarize(geometry = st_union(geometry)) |>
+  st_make_valid()
+
+
+ggplot() +
+  geom_sf(data = boston_landcover_simple, aes(fill = COVERNAME), color = NA) +
+  geom_sf(data = facilities_boston_only, color = "red")
+```
+
+```{r}
+# plot only 4000 to see if it works at least
+ggplot() +
+  geom_sf(data = sample_n(boston_landcover_final, 4000), aes(fill = COVERNAME)) +
+  geom_sf(data = facilities_boston_only, color = "red")
+```
+
+
+
+```{r}
+

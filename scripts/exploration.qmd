@@ -4,5 +4,15 @@ format: html
 ---
 
 ```{r packages}
+library(sf)
+```
+
+```{r}
+neighborhoods <- st_read(boston_landcover)
 
 ```
+
+```{r}
+
+```
+

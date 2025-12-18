@@ -4,6 +4,10 @@ format: html
 ---
 
 ```{r packages}
+install.packages("rmapshaper")
+library(rmapshaper)
+install.packages("jsonlite")
+library(jsonlite)
 library(tidyverse)
 library(sf)
 
@@ -25,6 +29,116 @@ towns |>
 boston <- towns |>
   filter(TOWN == "BOSTON")
 ```
+
+```{r}
+ro618_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R06C18/LCLU_R06C18.shp")
+
+ro619_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R06C19/LCLU_R06C19.shp")
+
+ro620_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R06C20/LCLU_R06C20.shp")
+
+ro718_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R07C18/LCLU_R07C18.shp")
+
+ro719_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R07C19/LCLU_R07C19.shp")
+
+ro720_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R07C20/LCLU_R07C20.shp")
+
+ro818_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R08C18/LCLU_R08C18.shp")
+
+ro819_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R08C19/LCLU_R08C19.shp")
+
+ro820_tile <- st_read("/Users/isaiahd12/Documents/dsc210_welfare_proj/Environmental_welfare_proj_boston/data/imported_data/LCLU_R08C20/LCLU_R08C20.shp")
+```
+
+```{r}
+st_crs(boston)
+st_crs(ro618_tile)
+```
+
+```{r}
+boston_crs <- st_crs(boston)
+
+ro618_tile <- st_transform(ro618_tile, boston_crs)
+ro619_tile <- st_transform(ro619_tile, boston_crs)
+ro620_tile <- st_transform(ro620_tile, boston_crs)
+ro718_tile <- st_transform(ro718_tile, boston_crs)
+ro719_tile <- st_transform(ro719_tile, boston_crs)
+ro720_tile <- st_transform(ro720_tile, boston_crs)
+ro818_tile <- st_transform(ro818_tile, boston_crs)
+ro819_tile <- st_transform(ro819_tile, boston_crs)
+ro820_tile <- st_transform(ro820_tile, boston_crs)
+```
+
+```{r}
+landcover_all <- bind_rows(
+  ro618_tile, ro619_tile, ro620_tile,
+  ro718_tile, ro719_tile, ro720_tile,
+  ro818_tile, ro819_tile, ro820_tile
+)
+
+```
+
+```{r}
+#Validating geometry and landcover
+landcover_all <- st_make_valid(landcover_all)
+
+```
+
+```{r}
+boston_landcover <- st_intersection(boston, landcover_all)
+```
+
+```{r}
+#convex hull of boston using st
+boston_hull <- st_convex_hull(st_union(boston))
+```
+
+```{r}
+#This filters 'landcover_all' to only keep rows that touch/overlap the 'boston_hull'
+landcover_subset <- st_filter(landcover_all, boston_hull, .predicate = st_intersects)
+```
+
+```{r}
+#final intersection
+boston_landcover_final <- st_intersection(landcover_subset, boston)
+```
+
+```{r}
+boston_landcover_final <- st_intersection(landcover_subset, boston) %>%
+  # 1. Make geometries valid first
+  st_make_valid() %>%
+  # 2. Extract ONLY the polygons/multipolygons from the collections
+  st_collection_extract("POLYGON") %>%
+  # 3. Drop empty geometries
+  filter(!st_is_empty(geometry))
+```
+
+## Import of WEB API facilites by the MBTA.
+
+
+```{r}
+# 1. Get the key from your environment
+```
+
+```{r}
+
+
+my_actual_key <- "7e0be112692c4d56bfb4c8833de0a099"
+
+
+api_url <- paste0("https://api-v3.mbta.com/facilities?include=stop&api_key=", my_actual_key)
+
+# data import
+raw_data <- fromJSON(api_url, flatten = TRUE)
+
+# 4. make sure I got my data and debug
+print(paste("Downloaded", nrow(raw_data$data), "rows of facilities data."))
+```
+
+
+##MBTA facitlies query api code
+
+```{r}
 
 ```
 
