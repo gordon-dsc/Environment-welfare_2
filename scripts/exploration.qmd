@@ -8,11 +8,6 @@ library(sf)
 ```
 
 ```{r}
-neighborhoods <- st_read(boston_landcover)
-
-```
-
-```{r}
-
+write.csv(final_wellness_data, "../output/final_wellness_data.csv", row.names = FALSE)
 ```
 

@@ -4,13 +4,14 @@ format: html
 ---
 
 ```{r packages}
-# In cleaning.qmd
+# Just incase
 library(dplyr)
 library(purrr)
 
 cleaned_facilities <- facilities_df |>
   #Filtering for specific platform types
-  #  'elevated-subplatform' or fully_elevated
+  #  'elevated-subplatform' or fully_elevated these are choice by mine since other facilites
+  #didnt track wellness in my opinion
   filter(attributes.type %in% c("ELEVATED_SUBPLATFORM", "FULLY_ELEVATED_PLATFORM")) |>
   
   
@@ -140,6 +141,8 @@ ggplot() +
 ```
 
 ```{r}
+# Blue dots indicate that elevation stations are accessible but they come from the location of 
+#former red dots earlier. 
 write.csv(final_wellness_data, "../output/final_wellness_data.csv", row.names = FALSE)
 ```
 

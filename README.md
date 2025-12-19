@@ -4,19 +4,54 @@ Well would you look at that, you're reading through the README.md file right now
 
 1.  Software and platform
 
-    -   Software (R, RStudio, Git) and packages (e.g., httr2, rvest, tidyr, etc.) including version numbers
+   Platform: [e.g., macOS Sequoia 15.1 or Windows 11]
 
-    -   Platform (Windows, macOS) including version numbers
+  Software: R (v4.4.1), RStudio (v2024.09.0), Git (v2.47.0)
+
+  Packages: tidyverse , httr2 , rvest , sf , janitor, purrr, jsonlite, rmapshaper
 
 2.  Documentation map
 
-    -   A map of your directory tree (see the example above) that includes all files and folder in your project
+    .
+├── data/
+│   ├── imported_data/
+│   │   ├── mbta_facilities_final.csv
+│   │   └── metadata/
+│   │       └── mbta_facilities_final_source.txt
+│   └── cleaned_data/
+│       ├── mbta_elevated_accessibility_wellness.csv
+│       └── metadata/
+│           └── mbta_elevated_accessibility_wellness_source.txt
+├── scripts/
+│   ├── import.qmd
+│   ├── cleaning.qmd
+│   └── exploration.qmd
+├── output/
+│   ├── final_wellness_data.csv
+│   ├── final_wellness_map.png
+│   └── metadata/
+│       ├── final_wellness_data_source.txt
+│       └── final_wellness_data_codebook.txt
+└── README.md
 
 3.  Instructions for reproducing your work
 
-    -   Step-by-step instructions that make it possible for a person unfamiliar with your project to reproduce the final_data.csv file
+    Environment Setup: Open the .Rproj file in RStudio to set the working directory.
 
-    -   These instructions should walk through the documentation map, clearly outlining the relationships between scripts and files (e.g., the data/imported_data/example.csv file is passed into scripts/cleaning.qmd to produce final_data.csv)
+Data Import: Run scripts/import.qmd. 
+This script uses {httr2} to query the MBTA API and {rvest} to scrape Wikipedia. 
+It saves the raw result as data/imported_data/mbta_facilities_final.csv. Should be 
+findable in output. 
+
+Data Cleaning: Run scripts/cleaning.qmd. This script reads mbta_facilities_final.csv, 
+performs rectangling and joins it with the Land Cover data. 
+It produces the midpoint file data/cleaned_data/mbta_elevated_accessibility_wellness.csv and 
+the final analysis file output/final_wellness_data.csv. Exploration is not used much and 
+cleaning.qmd produces the final result while import also has some debugging features.
+
+Exploration & Visualization: Run scripts/exploration.qmd 
+to process the final data and generate the map output/final_wellness_map.png. It is the last
+cell block in exploration.
 
 ### The data/ folder
 

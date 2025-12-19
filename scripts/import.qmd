@@ -94,7 +94,9 @@ boston_hull <- st_convex_hull(st_union(boston))
 ```
 
 ```{r}
-#This filters 'landcover_all' to only keep rows that touch/overlap the 'boston_hull'
+#This filters 'landcover_all' to only keep rows that touch/overlap the 'boston_hull' Recommended
+# sam mason, trying it for first time, taken from the web.. Hull rdoc.org is where 
+#hull info is from
 landcover_subset <- st_filter(landcover_all, boston_hull, .predicate = st_intersects)
 ```
 
@@ -105,11 +107,11 @@ boston_landcover_final <- st_intersection(landcover_subset, boston)
 
 ```{r}
 boston_landcover_final <- st_intersection(landcover_subset, boston) %>%
-  # 1. Make geometries valid first
+  #  Make geomes valid 
   st_make_valid() %>%
-  # 2. Extract ONLY the polygons/multipolygons from the collections
+  # Extracing only the polygons/multipolygons from the collections
   st_collection_extract("POLYGON") %>%
-  # 3. Drop empty geometries
+  # Drop empty geomes to prep for final spacial join later on.
   filter(!st_is_empty(geometry))
 ```
 
@@ -199,7 +201,7 @@ write.csv(st_drop_geometry(facilities_final_output),
 # Opening direct file to view my png
 png("../output/final_wellness_map.png", width = 2400, height = 1800, res = 300)
 
-# 2. Plot code to make it look pretty
+#  Plot code to make it look pretty
 ggplot() +
   geom_sf(data = boston_landcover_simple, aes(fill = COVERNAME), color = NA, alpha = 0.5) +
   geom_sf(data = facilities_final_output, aes(color = Accessibility_Status), size = 3) +
