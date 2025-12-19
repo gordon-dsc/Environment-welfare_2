@@ -138,7 +138,79 @@ print(paste("Downloaded", nrow(raw_data$data), "rows of facilities data."))
 
 ##MBTA facitlies query api code
 
+
+```{r}
+head(facilities_boston_only$short_name, 10)
+
+head(stations_clean$Station, 10)
+```
 ```{r}
 
+
+# 1. Target the ACTUAL Subway station table (usually Table 3 or 4)
+url <- "https://en.wikipedia.org/wiki/List_of_MBTA_subway_stations"
+page <- read_html(url)
+all_tables <- page %>% html_table(fill = TRUE)
+
+# We want the table that has "Station" and "City/neighborhood"
+# Based on your output, we want to look for the table where the first column is 'Station'
+stations_scraped <- all_tables[[3]] # Trying table 3
+
+# 2. Fix your Facilities names
+# Your names look like "Mini-high platform (Track 2/Boston)"
+# We need to extract a location if possible, or use the 'id'
+facilities_ready <- facilities_boston_only %>%
+  mutate(
+    # Let's try to extract any station names if they are hidden in the ID
+    # Usually MBTA IDs look like 'place-north' or 'place-sstat'
+    id_clean = str_remove(id, "BW-"), 
+    id_clean = str_remove(id_clean, "place-")
+  )
+
+# 3. Create a manual 'Accessibility' flag based on your Platform Data
+# Since your API data literally says "Mini-high platform", 
+# THAT IS the accessibility info! 'Mini-high' means it IS ADA accessible.
+facilities_final <- facilities_ready %>%
+  mutate(
+    Accessibility_Status = ifelse(str_detect(short_name, "Mini-high"), "Accessible", "Check Station")
+  )
+
+head(facilities_final$Accessibility_Status)
+```
+
+```{r}
+# Finalizies and cleans up my facilities data
+facilities_final_output <- facilities_final |>
+  mutate(
+    # Clean up the names for the final map labels
+    clean_label = str_remove(short_name, "Mini-high platform "),
+    # Geom being handled for my csv export
+    lon = st_coordinates(geometry)[,1],
+    lat = st_coordinates(geometry)[,2]
+  )
+
+# Wellness data for kaggle
+write.csv(st_drop_geometry(facilities_final_output), 
+          "../output/mbta_elevated_accessibility_wellness.csv", 
+          row.names = FALSE)
+```
+
+
+```{r}
+# Opening direct file to view my png
+png("../output/final_wellness_map.png", width = 2400, height = 1800, res = 300)
+
+# 2. Plot code to make it look pretty
+ggplot() +
+  geom_sf(data = boston_landcover_simple, aes(fill = COVERNAME), color = NA, alpha = 0.5) +
+  geom_sf(data = facilities_final_output, aes(color = Accessibility_Status), size = 3) +
+  scale_color_manual(values = c("Accessible" = "#0072B2", "Check Station" = "#D55E00")) +
+  theme_minimal() +
+  labs(title = "Elevated Transit Wellness: Boston",
+       subtitle = "Mapping ADA 'Mini-High' Infrastructure across Land Cover",
+       fill = "Land Type", color = "Status")
+
+# Basically bypass my error from earlier.
+dev.off()
 ```
 

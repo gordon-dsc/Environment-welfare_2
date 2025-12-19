@@ -28,14 +28,14 @@ cleaned_facilities <- facilities_df |>
 #  Save the final relational flat file could be used for kaggle documentation and etc
 write.csv(cleaned_facilities, "../output/mbta_facilities_final.csv", row.names = FALSE)
 
-# 1. Handling NA values and convert to a Spatial Object 
+# Handles NA values which there is a lot of long and lat NA values
 # st_as_sf crashes if there are NAs in longitude/latitude, so this is how I handle it. 
 
 facilities_spatial <- cleaned_facilities |>
   filter(!is.na(latitude) & !is.na(longitude)) |> 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
-# 2. Ensuring that Boston Hull is also in EPSG:4326
+#  Ensuring that Boston Hull is also in EPSG:4326
 # This helps me because my previous joins and crs were cashing
 boston_hull_sf <- st_sf(geometry = boston_hull) |> 
   st_transform(4326)
@@ -52,7 +52,7 @@ facilities_boston_only <- facilities_in_hull |>
 total_count <- nrow(facilities_boston_only)
 print(paste("Total elevated facilities in Boston Hull:", total_count))
 
-# 5. Save the final spatial CSV for Kaggle
+# Save this final spatial data for a csv to use in kaggle
 # We convert back to a regular data frame so it's a "flat file"
 facilities_final_output <- facilities_boston_only |>
   mutate(lon = st_coordinates(geometry)[,1],
@@ -87,11 +87,60 @@ ggplot() +
 ```{r}
 # plot only 4000 to see if it works at least
 ggplot() +
-  geom_sf(data = sample_n(boston_landcover_final, 4000), aes(fill = COVERNAME)) +
+  geom_sf(data = sample_n(boston_landcover_final, 10000), aes(fill = COVERNAME)) +
   geom_sf(data = facilities_boston_only, color = "red")
 ```
 
+```{r}
+# Made sure scraped data matched the names
+stations_clean_for_join <- stations_clean |>
+  mutate(short_name = Station) #Matching the api here
+
+#  Joining the Scrape (Wellness/Accessibility) to the Spatial Dots
+# left_join to keep  our map dots even if a scrape match isn't found
+final_analysis_data <- facilities_boston_only |>
+  left_join(stations_clean_for_join, by = "short_name")
+
+# This is a quick debug and check How many dots now have 'Accessibility' info?
+print(paste("Stations with Accessibility data:", sum(!is.na(final_analysis_data$Accessibility))))
+```
 
 
 ```{r}
+head(stations_clean$Station, 5)
+```
+
+
+```{r}
+# Simple landcover for plotting
+boston_landcover_simple <- boston_landcover_final |>
+  group_by(COVERNAME) |>
+  summarize(geometry = st_union(geometry)) |>
+  st_make_valid() |>
+  st_transform(4326) #Matches dots 
+```
+
+
+```{r}
+
+
+ggplot() +
+  # Check on my map to see what I did right or wrong using aesthetic mapping
+  geom_sf(data = boston_landcover_simple, aes(fill = COVERNAME), color = "white", size = 0.1) +
+  # Overlay facility dots on surrounding boston area
+  geom_sf(data = facilities_boston_only, color = "red", size = 2) +
+  theme_minimal() +
+  labs(title = "Victory Map: MBTA Facilities on Simplified Landcover",
+       subtitle = "Spatial Melt Complete")
+```
+```{r}
+ggplot() +
+  geom_sf(data = boston_landcover_simple, aes(fill = COVERNAME), color = NA) + 
+  geom_sf(data = facilities_boston_only, color = "red", size = 1.5)
+```
+
+```{r}
+write.csv(final_wellness_data, "../output/final_wellness_data.csv", row.names = FALSE)
+```
+
 

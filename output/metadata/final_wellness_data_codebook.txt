@@ -1,0 +1,13 @@
+Name: id Type: text Description: Unique identifier for the MBTA facility.
+
+Name: facility_type Type: nominal Description: Infrastructure category (e.g., ELEVATED_SUBPLATFORM).
+
+Name: short_name Type: text Description: Human-readable name used to determine 'Mini-high' accessibility.
+
+Name: Accessibility_Status Type: nominal Description: Binary status where 'Accessible' denotes a Mini-high platform.
+
+Name: lon Type: continuous Description: Longitude coordinate in Decimal Degrees.
+
+Name: lat Type: continuous Description: Latitude coordinate in Decimal Degrees.
+
+Name: COVERNAME Type: nominal Description: Land cover classification (e.g., Developed, Forest, Water).
