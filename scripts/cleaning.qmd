@@ -53,7 +53,7 @@ total_count <- nrow(facilities_boston_only)
 print(paste("Total elevated facilities in Boston Hull:", total_count))
 
 # Save this final spatial data for a csv to use in kaggle
-# We convert back to a regular data frame so it's a "flat file"
+
 facilities_final_output <- facilities_boston_only |>
   mutate(lon = st_coordinates(geometry)[,1],
          lat = st_coordinates(geometry)[,2]) |>

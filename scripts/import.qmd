@@ -147,22 +147,19 @@ head(stations_clean$Station, 10)
 ```{r}
 
 
-# 1. Target the ACTUAL Subway station table (usually Table 3 or 4)
+Target the ACTUAL Subway station table (usually Table 3 or 4)
 url <- "https://en.wikipedia.org/wiki/List_of_MBTA_subway_stations"
 page <- read_html(url)
 all_tables <- page %>% html_table(fill = TRUE)
 
-# We want the table that has "Station" and "City/neighborhood"
-# Based on your output, we want to look for the table where the first column is 'Station'
+#  table that has "Station" and "City/neighborhood"
+
 stations_scraped <- all_tables[[3]] # Trying table 3
 
-# 2. Fix your Facilities names
-# Your names look like "Mini-high platform (Track 2/Boston)"
-# We need to extract a location if possible, or use the 'id'
+
 facilities_ready <- facilities_boston_only %>%
   mutate(
-    # Let's try to extract any station names if they are hidden in the ID
-    # Usually MBTA IDs look like 'place-north' or 'place-sstat'
+
     id_clean = str_remove(id, "BW-"), 
     id_clean = str_remove(id_clean, "place-")
   )
@@ -170,6 +167,8 @@ facilities_ready <- facilities_boston_only %>%
 # 3. Create a manual 'Accessibility' flag based on your Platform Data
 # Since your API data literally says "Mini-high platform", 
 # THAT IS the accessibility info! 'Mini-high' means it IS ADA accessible.
+# READ IF NEEDED, I was experiencing errors earlier with making this accessible read back to above 
+#three lines for the purpose of this..... Might forget
 facilities_final <- facilities_ready %>%
   mutate(
     Accessibility_Status = ifelse(str_detect(short_name, "Mini-high"), "Accessible", "Check Station")
